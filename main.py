@@ -27,12 +27,16 @@ class Wait(StatesGroup):
     delete_confirm = State()
     anketa_reaction = State()
 
+
+#F для Возвращения анкеты в виде строки
 def show_anketa(sost, name, age, city, text):
     if sost == True:
         return f'{name}\n{age}\n{city}\n{text}\nИщет проект'
     else:
         return f'{name}\n{age}\n{city}\n{text}\nИщет команду'
 
+
+#F обработчик команды старт, приветствие и выбор действия
 @dp.message_handler(commands='start', state= '*')
 async def start(message: types.Message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -41,21 +45,23 @@ async def start(message: types.Message):
     await bot.send_message(message.chat.id, 'Привет, я бот для поиска IT команды \n Выбери что хочешь сделать:', reply_markup=markup)
     await Wait.join_team.set()
 
+#F Ввод и занесение статуса поиска в анкету ( в будущем в бд )
 @dp.message_handler(state= Wait.join_team)
-async def start(message: types.Message, state: FSMContext):
+async def join_team(message: types.Message, state: FSMContext):
     await state.update_data(join_team = True)
     await state.update_data(find_team=False)
     await bot.send_message(message.chat.id, 'Отлично! \n ВВеди свое ФИО')
     await Wait.name.set()
 
 
-
+#F Ввод и занесение имени в анкету ( в будущем в бд )
 @dp.message_handler(state= Wait.name)
-async def start(message: types.Message, state: FSMContext):
+async def name(message: types.Message, state: FSMContext):
     await state.update_data(name = message.text)
     await bot.send_message(message.chat.id, 'Отлично! \n Теперь введи возраст')
     await Wait.age.set()
 
+#F Ввод и занесение возраста в анкету ( в будущем в бд )
 @dp.message_handler(state = Wait.age)
 async def age(message: types.Message, state: FSMContext):
     try:
@@ -69,6 +75,7 @@ async def age(message: types.Message, state: FSMContext):
     await message.answer("Напишите свой город")
     await Wait.city.set()
 
+#F Ввод и занесение города в анкету ( в будущем в бд )
 @dp.message_handler(state = Wait.city)
 async def city(message: types.Message, state: FSMContext):
     if len(message.text) > 30:
@@ -83,6 +90,7 @@ async def city(message: types.Message, state: FSMContext):
     await message.answer("Расскажи о своих навыках и опыте в проектах", reply_markup = keyboard)
     await Wait.text.set()
 
+#F Ввод и занесение описания в анкету ( в будущем в бд )
 @dp.message_handler(state = Wait.text)
 async def text(message: types.Message, state: FSMContext):
     global dict_users
@@ -103,6 +111,7 @@ async def text(message: types.Message, state: FSMContext):
     await Wait.menu_answer.set()
 
 
+#F ответ на выбранный пользователем пункт меню ( ответ менюшки ) (менюшки пока нет))))
 @dp.message_handler(state= Wait.menu_answer)
 async def menu_answer(message: types.Message, state: FSMContext):
     if message.text == '1':
@@ -117,9 +126,6 @@ async def menu_answer(message: types.Message, state: FSMContext):
         await message.answer(f"Вот твоя анкета")
         await message.answer(f"{caption}")
         await Wait.menu_answer.set()
-
-
-
 
 
 
