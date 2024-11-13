@@ -72,30 +72,3 @@ class BotDB:
     def close(self):
         self.connection.close()
 
-
-import random
-
-def get_random_pair(dictionary, skill: list):
-    # Проверяем, что словарь не пустой
-    if not dictionary:
-        return None  # Возвращаем None, если словарь пуст
-
-    # Выбираем случайный ключ из словаря
-    random_key = random.choice(list(dictionary.keys()))
-    return random_key, dictionary[random_key]
-
-# Пример использования
-example_dict = {
-    'fruit': 'apple',
-    'vegetable': 'carrot',
-    'grain': 'rice',
-    'snack': 'chips'
-}
-
-result = get_random_pair(example_dict)
-
-if result:
-    print(f"Случайная пара: ключ = '{result[0]}', значение = '{result[1]}'")
-else:
-    print("Словарь пуст.")
-
