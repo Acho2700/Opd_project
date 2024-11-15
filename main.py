@@ -25,13 +25,10 @@ class Wait(StatesGroup):
     text = State()
     text_project = State()
     recommendations = State()
-    yes_no = State()
-    edit_anket = State()
     menu_answer = State()
     add_skill = State()
     del_skill = State()
     anketa_activ = State()
-    no_activ = State()
 
 
 
@@ -68,12 +65,7 @@ async def group_or_user(message: types.Message, state: FSMContext):
         await bot.send_message(message.chat.id, 'Отлично! \n Введи Название проекта')
         await Wait.name_project.set()
 
-#F Ввод и занесение статуса поиска в анкету ( в будущем в бд )
-# @dp.message_handler(state= Wait.join_team)
-# async def join_team(message: types.Message, state: FSMContext):
-#     await state.update_data(join_team = True)
-#     await bot.send_message(message.chat.id, 'Отлично! \n ВВеди свое ФИО')
-#     await Wait.name.set()
+
 
 #F Ввод и занесение имени в анкету ( в будущем в бд )
 @dp.message_handler(state= Wait.name)
@@ -339,7 +331,7 @@ async def recommendations(message: types.Message, state: FSMContext):
             value = result[1]
 
             project = Dict_project.dict_project[key]
-            caption = project.show_project
+            caption = project.show_project()
             await message.answer(f'{caption}')
             await Wait.recommendations.set()
 
