@@ -2,6 +2,8 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.types import KeyboardButton
+
 from users_dict import Dict_users
 from user_class import User
 from group_class import Group
@@ -13,7 +15,7 @@ bot = Bot(token="7855213389:AAFdmLy9DS1HJ39MuPaO48XKogYtvuKihOw")
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
-menu_main_text = "1. Добавить навык\n 2.Удалить навык\n 3. Выключить\Включить анкету\n 4. Моя анкета\n 5. Искать проект"
+menu_main_text = "1. Добавить навык\n 2.Удалить навык\n 3. Выключить\Включить анкету\n 4. Моя анкета\n 5. Искать проект/участника"
 
 
 class Wait(StatesGroup):
@@ -33,7 +35,7 @@ class Wait(StatesGroup):
 
 
 def menu_keyboard(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     buttons = ["1", "2", "3", "4", "5"]
     markup.add(*buttons)
     return markup
@@ -185,16 +187,20 @@ async def menu_answer(message: types.Message, state: FSMContext):
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
             caption = user.show_anketa()
+            markup = menu_keyboard(message)
             await message.answer(f"Вот твоя анкета")
             print(user.__dict__)
-            await message.answer(f"{caption}")
+            await message.answer(f"{caption}", reply_markup=markup)
+            await message.answer(menu_main_text)
 
         if chat_id in Dict_project.dict_project:
             user = Dict_project.dict_project[chat_id]
             caption = user.show_project()
+            markup = menu_keyboard(message)
             await message.answer(f"Вот твой проект")
             print(user.__dict__)
-            await message.answer(f"{caption}")
+            await message.answer(f"{caption}", reply_markup=markup)
+            await message.answer(menu_main_text)
 
     if message.text == '5':
         markup = reaction_keyboard(message)
@@ -204,6 +210,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
             user = Dict_users.dict_users[chat_id]
             result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills)
             if result == None:
+                markup = menu_keyboard(message)
                 await message.answer('Никого нет для вас', reply_markup=markup)
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
@@ -219,6 +226,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
             project = Dict_project.dict_project[chat_id]
             result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills)
             if result == None:
+                markup = menu_keyboard(message)
                 await message.answer('Никого нет для вас', reply_markup=markup)
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
@@ -245,7 +253,8 @@ async def add_skill(message: types.Message, state: FSMContext):
 
     user.add_skill(message.text)
     await message.answer('Навык успешно добавлен!')
-    await message.answer(menu_main_text)
+    markup = menu_keyboard(message)
+    await message.answer(menu_main_text, reply_markup=markup)
     await Wait.menu_answer.set()
 
 @dp.message_handler(state= Wait.del_skill)
@@ -259,8 +268,9 @@ async def del_skill(message: types.Message, state: FSMContext):
         user = Dict_project.dict_project[chat_id]
 
     user.delete_skill(message.text)
+    markup = menu_keyboard(message)
     await message.answer('Навык успешно удалён!')
-    await message.answer(menu_main_text)
+    await message.answer(menu_main_text, reply_markup=markup)
     await Wait.menu_answer.set()
 
 @dp.message_handler(state= Wait.anketa_activ)
@@ -322,7 +332,7 @@ async def recommendations(message: types.Message, state: FSMContext):
             caption_flag = user.show_anketa()
             result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills)
             if result == None:
-                markup = reaction_keyboard(message)
+                markup = menu_keyboard(message)
                 await message.answer('Никого нет для вас', reply_markup=markup)
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
@@ -332,7 +342,8 @@ async def recommendations(message: types.Message, state: FSMContext):
 
             project = Dict_project.dict_project[key]
             caption = project.show_project()
-            await message.answer(f'{caption}')
+            markup = reaction_keyboard(message)
+            await message.answer(f'{caption}', reply_markup=markup)
             await Wait.recommendations.set()
 
 
@@ -343,7 +354,7 @@ async def recommendations(message: types.Message, state: FSMContext):
             word_to_find = project.skills
             result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills)
             if result == None:
-                markup = reaction_keyboard(message)
+                markup = menu_keyboard(message)
                 await message.answer('Никого нет для вас', reply_markup=markup)
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
@@ -351,9 +362,11 @@ async def recommendations(message: types.Message, state: FSMContext):
 
             key = result[0]
             value = result[1]
+
             user = Dict_users.dict_users[key]
             caption = user.show_anketa()
-            await message.answer(f'{caption}')
+            markup = reaction_keyboard(message)
+            await message.answer(f'{caption}', reply_markup=markup)
             await Wait.recommendations.set()
 
         if message.text == 'Лайк':
