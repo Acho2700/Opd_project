@@ -2,8 +2,8 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.types import KeyboardButton
-
+from aiogram.types import KeyboardButton, InlineKeyboardButton, CallbackQuery
+from aiogram.types import KeyboardButton, InlineKeyboardButton, CallbackQuery
 from users_dict import Dict_users
 from user_class import User
 from group_class import Group
@@ -144,6 +144,16 @@ async def text_project(message: types.Message, state: FSMContext):
     await Wait.menu_answer.set()
 
 
+@dp.callback_query_handler(text='btn1')
+async def process_callback_button1(call: types.CallbackQuery):
+    print('1')
+    await call.message.answer('Нажата первая кнопка!')
+    print(call.message.message_id)
+    await call.answer()
+
+
+
+
 #F ответ на выбранный пользователем пункт меню ( ответ менюшки ) (менюшки пока нет))))
 @dp.message_handler(state= Wait.menu_answer)
 async def menu_answer(message: types.Message, state: FSMContext):
@@ -151,8 +161,10 @@ async def menu_answer(message: types.Message, state: FSMContext):
 
 
     if message.text == '1':
-        await message.answer('Введи навык для добавления')
-        await Wait.add_skill.set()
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton(text="Нажми меня", callback_data="btn1"))
+        await message.answer('Введи навык для добавления', reply_markup=keyboard)
+        # await Wait.add_skill.set()
 
 
     if message.text == '2':
