@@ -206,9 +206,11 @@ async def menu_answer(message: types.Message, state: FSMContext):
         markup = reaction_keyboard(message)
         await message.answer('Подбираем анкеты для вас...', reply_markup=markup)
 
+
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
-            result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills)
+            result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills, user.last_users)
+
             if result == None:
                 markup = menu_keyboard(message)
                 await message.answer('Никого нет для вас', reply_markup=markup)
@@ -217,14 +219,15 @@ async def menu_answer(message: types.Message, state: FSMContext):
                 return
             key = result[0]
             value = result[1]
+            user.last_users.append(key)
 
             project = Dict_project.dict_project[key]
             caption = project.show_project()
             await message.answer(f'{caption}')
 
-        if chat_id in Dict_project.dict_project:
+        elif chat_id in Dict_project.dict_project:
             project = Dict_project.dict_project[chat_id]
-            result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills)
+            result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills, project.last_users)
             if result == None:
                 markup = menu_keyboard(message)
                 await message.answer('Никого нет для вас', reply_markup=markup)
@@ -233,6 +236,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
                 return
             key = result[0]
             value = result[1]
+            project.last_users.append(key)
 
             user = Dict_users.dict_users[key]
             caption = user.show_anketa()
@@ -306,19 +310,44 @@ async def anketa_activ(message: types.Message, state: FSMContext):
 
 
 
-def get_random_user_with_matching_skill(user_dict, skill_list):
-    # Фильтруем ключи, у которых хотя бы одна строка совпадает с skills
-    # matching_users = {key: user for key, user in user_dict.items() if any(skill in user.skills for skill in skill_list)}
+# def get_random_user_with_matching_skill(user_dict, skill_list):
+#     # Фильтруем ключи, у которых хотя бы одна строка совпадает с skills
+#     # matching_users = {key: user for key, user in user_dict.items() if any(skill in user.skills for skill in skill_list)}
+#     matching_users = {}
+#     for key, user in user_dict.items():
+#         flag = any(skill == skill2 for skill in skill_list for skill2 in user.skills)
+#         if flag:
+#             matching_users[key] = user
+#     # Если есть совпадения, выбираем случайный ключ и значение
+#     if matching_users:
+#         random_key = random.choice(list(matching_users.keys()))
+#         return random_key, matching_users[random_key]
+#     return None
+
+def get_random_user_with_matching_skill(user_dict, skill_list, last_users):
+    """Возвращает случайного пользователя с хотя бы одним совпадающим навыком из заданного списка,
+    избегая повторного выбора последних 5 пользователей."""
+
+
+
+    # Фильтруем пользователей, у которых есть хотя бы один навык из skill_list
     matching_users = {}
     for key, user in user_dict.items():
         flag = any(skill == skill2 for skill in skill_list for skill2 in user.skills)
         if flag:
             matching_users[key] = user
-    # Если есть совпадения, выбираем случайный ключ и значение
+
+    # Если есть совпадения, выбираем случайного пользователя, избегая последних 5
     if matching_users:
-        random_key = random.choice(list(matching_users.keys()))
-        return random_key, matching_users[random_key]
-    return None
+        while True:
+            random_key = random.choice(list(matching_users.keys()))
+            if random_key not in last_users[-5:]:
+                last_users.append(random_key)
+                print(random_key, matching_users[random_key])
+                return random_key, matching_users[random_key]
+            else:
+                return None
+
 
 
 
@@ -330,7 +359,7 @@ async def recommendations(message: types.Message, state: FSMContext):
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
             caption_flag = user.show_anketa()
-            result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills)
+            result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills, user.last_users)
             if result == None:
                 markup = menu_keyboard(message)
                 await message.answer('Никого нет для вас', reply_markup=markup)
@@ -339,6 +368,7 @@ async def recommendations(message: types.Message, state: FSMContext):
                 return
             key = result[0]
             value = result[1]
+            user.last_users.append(key)
 
             project = Dict_project.dict_project[key]
             caption = project.show_project()
@@ -347,12 +377,12 @@ async def recommendations(message: types.Message, state: FSMContext):
             await Wait.recommendations.set()
 
 
-        if chat_id in Dict_project.dict_project:
+        elif chat_id in Dict_project.dict_project:
 
             project = Dict_project.dict_project[chat_id]
             caption_flag = project.show_project()
             word_to_find = project.skills
-            result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills)
+            result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills, project.last_users)
             if result == None:
                 markup = menu_keyboard(message)
                 await message.answer('Никого нет для вас', reply_markup=markup)
@@ -362,6 +392,7 @@ async def recommendations(message: types.Message, state: FSMContext):
 
             key = result[0]
             value = result[1]
+            project.last_users.append(key)
 
             user = Dict_users.dict_users[key]
             caption = user.show_anketa()

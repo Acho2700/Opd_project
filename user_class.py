@@ -1,13 +1,14 @@
 class User:
-    def __init__(self, name, age, skills=None, in_active=True):
+    def __init__(self, name, age, skills=None, in_active=True, last_users=[]):
         self.name = name
         self.age = age
         self.skills = skills if skills is not None else []
         self.in_active = in_active
+        self.last_users = last_users
 
     def add_skill(self, skill):
         """Добавляет новый навык в список навыков."""
-        if skill is not self.skills:
+        if skill not in self.skills:
             self.skills.append(skill)
             print(f"Навык {skill} добавлен")
         else:
@@ -19,7 +20,7 @@ class User:
             self.skills.remove(skill)
             print(f"Навык {skill} удален")
         else:
-            print(f"Навык {skill} на найден")
+            print(f"Навык {skill} не найден")
 
     def activ_status(self):
         """Переключает статус активности пользователя."""
