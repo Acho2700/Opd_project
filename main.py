@@ -39,7 +39,7 @@ def menu_keyboard():
     markup.add(*buttons)
     return markup
 
-def reaction_keyboard(message):
+def reaction_keyboard():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = ["Лайк", "Дизлайк", "Вернуться назад"]
     markup.add(*buttons)
@@ -68,21 +68,32 @@ def del_skill_keyboard(user):
 #F обработчик команды старт, приветствие и выбор действия
 @dp.message_handler(commands='start', state= '*')
 async def start(message: types.Message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    buttons = ["Вступить в комманду", "Найти комманду"]
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
+                                       one_time_keyboard=True)
+    buttons = ["Вступить в комманду",
+               "Найти комманду"]
     markup.add(*buttons)
-    await bot.send_message(message.chat.id, 'Привет, я бот для поиска IT команды \n Выбери что хочешь сделать:', reply_markup=markup)
+    await bot.send_message(message.chat.id,
+                           'Привет, я бот для поиска IT команды \n '
+                           'Выбери что хочешь сделать:',
+                           reply_markup=markup
+                           )
     await Wait.group_or_user.set()
 
 @dp.message_handler(state= Wait.group_or_user)
 async def group_or_user(message: types.Message, state: FSMContext):
     if message.text == "Вступить в комманду":
         await state.update_data(join_team=True)
-        await bot.send_message(message.chat.id, 'Отлично! \n Введи свое ФИО')
+        await bot.send_message(message.chat.id, 'Отлично!'
+                                                ' \n Введи свое ФИО'
+                               )
         await Wait.name.set()
+
     elif message.text == "Найти комманду":
         await state.update_data(join_team=False)
-        await bot.send_message(message.chat.id, 'Отлично! \n Введи Название проекта')
+        await bot.send_message(message.chat.id, 'Отлично!'
+                                                ' \n Введи Название проекта'
+                               )
         await Wait.name_project.set()
 
 
@@ -91,15 +102,19 @@ async def group_or_user(message: types.Message, state: FSMContext):
 @dp.message_handler(state= Wait.name)
 async def name(message: types.Message, state: FSMContext):
     await state.update_data(name = message.text)
-    await bot.send_message(message.chat.id, 'Отлично! \n Теперь введи возраст')
+    await bot.send_message(message.chat.id, 'Отлично! \n'
+                                            ' Теперь введи возраст'
+                           )
     await Wait.age.set()
 
 @dp.message_handler(state= Wait.name_project)
 async def name_project(message: types.Message, state: FSMContext):
     await state.update_data(name_project = message.text)
-    await bot.send_message(message.chat.id, 'Отлично! \n Теперь расскажи о проекте')
+    await bot.send_message(message.chat.id, 'Отлично! \n'
+                                            ' Теперь расскажи о проекте'
+                           )
     await Wait.text_project.set()
-
+#ЗАМЕТКА: нужно попробовать сократить и объединить регистрацию  с условиями
 
 #F Ввод и занесение возраста в анкету ( в будущем в бд )
 @dp.message_handler(state = Wait.age)
@@ -136,7 +151,9 @@ async def text(message: types.Message, state: FSMContext):
     await message.answer(f"Вот твоя анкета")
     await message.answer(f"{caption}")
     markup = menu_keyboard()
-    await message.answer(menu_main_text, reply_markup=markup)
+    await message.answer(menu_main_text,
+                         reply_markup=markup
+                         )
     await Wait.menu_answer.set()
 
 
@@ -158,21 +175,13 @@ async def text_project(message: types.Message, state: FSMContext):
     await message.answer(f"Вот анкета твоего проекта")
     await message.answer(f"{caption}")
     markup = menu_keyboard()
-    await message.answer(menu_main_text, reply_markup=markup)
+    await message.answer(menu_main_text,
+                         reply_markup=markup
+                         )
     await Wait.menu_answer.set()
 
 
-@dp.callback_query_handler(text='btn1')
-async def process_callback_button1(call: types.CallbackQuery):
-    print('1')
-    await call.message.answer('Нажата первая кнопка!')
-    print(call.message.message_id)
-    await call.answer()
-
-
-
-
-#F ответ на выбранный пользователем пункт меню ( ответ менюшки ) (менюшки пока нет))))
+#F ответ на выбранный пользователем пункт меню
 @dp.message_handler(state= Wait.menu_answer)
 async def menu_answer(message: types.Message, state: FSMContext):
     chat_id = message.chat.id
@@ -204,26 +213,35 @@ async def menu_answer(message: types.Message, state: FSMContext):
 
 
     if message.text == '3':
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
+                                           one_time_keyboard=True)
         buttons = ["Нет", "Да"]
         markup.add(*buttons)
         chat_id = message.chat.id
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
             if user.in_active:
-                await message.answer('Вы уверены что хотите выключить анкету?', reply_markup=markup)
+                await message.answer('Вы уверены что хотите выключить анкету?',
+                                     reply_markup=markup
+                                     )
                 await Wait.anketa_activ.set()
             else:
-                await message.answer('Вы уверены что хотите включить анкету?', reply_markup=markup)
+                await message.answer('Вы уверены что хотите включить анкету?',
+                                     reply_markup=markup
+                                     )
                 await Wait.anketa_activ.set()
 
         if chat_id in Dict_project.dict_project:
             project = Dict_project.dict_project[chat_id]
             if project.in_active:
-                await message.answer('Вы уверены что хотите выключить анкету проекта?', reply_markup=markup)
+                await message.answer('Вы уверены что хотите выключить анкету проекта?',
+                                     reply_markup=markup
+                                     )
                 await Wait.anketa_activ.set()
             else:
-                await message.answer('Вы уверены что хотите включить анкету проекта?', reply_markup=markup)
+                await message.answer('Вы уверены что хотите включить анкету проекта?',
+                                     reply_markup=markup
+                                     )
                 await Wait.anketa_activ.set()
 
     if message.text == '4':
@@ -233,7 +251,9 @@ async def menu_answer(message: types.Message, state: FSMContext):
             markup = menu_keyboard()
             await message.answer(f"Вот твоя анкета")
             print(user.__dict__)
-            await message.answer(f"{caption}", reply_markup=markup)
+            await message.answer(f"{caption}",
+                                 reply_markup=markup
+                                 )
             await message.answer(menu_main_text)
 
         if chat_id in Dict_project.dict_project:
@@ -242,40 +262,55 @@ async def menu_answer(message: types.Message, state: FSMContext):
             markup = menu_keyboard()
             await message.answer(f"Вот твой проект")
             print(user.__dict__)
-            await message.answer(f"{caption}", reply_markup=markup)
+            await message.answer(f"{caption}",
+                                 reply_markup=markup
+                                 )
             await message.answer(menu_main_text)
 
     if message.text == '5':
-        markup = reaction_keyboard(message)
-        await message.answer('Подбираем анкеты для вас...', reply_markup=markup)
+        markup = reaction_keyboard()
+        await message.answer('Подбираем анкеты для вас...',
+                             reply_markup=markup
+                             )
+
 
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
-            result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills)
+            result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills, user.last_users)
+
             if result == None:
                 markup = menu_keyboard()
-                await message.answer('Никого нет для вас', reply_markup=markup)
+                await message.answer('Никого нет для вас',
+                                     reply_markup=markup
+                                     )
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
                 return
+
             key = result[0]
             value = result[1]
+            user.last_users.append(key)
 
             project = Dict_project.dict_project[key]
             caption = project.show_project()
             await message.answer(f'{caption}')
 
-        if chat_id in Dict_project.dict_project:
+        elif chat_id in Dict_project.dict_project:
             project = Dict_project.dict_project[chat_id]
-            result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills)
+            result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills, project.last_users)
+
             if result == None:
                 markup = menu_keyboard()
-                await message.answer('Никого нет для вас', reply_markup=markup)
+                await message.answer('Никого нет для вас',
+                                     reply_markup=markup
+                                     )
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
                 return
+
             key = result[0]
             value = result[1]
+            project.last_users.append(key)
 
             user = Dict_users.dict_users[key]
             caption = user.show_anketa()
@@ -344,35 +379,56 @@ async def anketa_activ(message: types.Message, state: FSMContext):
         user.activ_status()
         await message.answer('Ваша анкета больше не активна')
         markup = menu_keyboard()
-        await message.answer(menu_main_text, reply_markup=markup)
+        await message.answer(menu_main_text,
+                             reply_markup=markup
+                             )
         await Wait.menu_answer.set()
+
     elif message.text == 'Да' and check == False:
         user.activ_status()
         await message.answer('Ваша анкета снова активна')
         markup = menu_keyboard()
-        await message.answer(menu_main_text, reply_markup=markup)
+        await message.answer(menu_main_text,
+                             reply_markup=markup
+                             )
         await Wait.menu_answer.set()
+
     elif message.text == 'Нет':
         markup = menu_keyboard()
-        await message.answer(menu_main_text, reply_markup=markup)
+        await message.answer(menu_main_text,
+                             reply_markup=markup
+                             )
         await Wait.menu_answer.set()
 
 
 
 
-def get_random_user_with_matching_skill(user_dict, skill_list):
-    # Фильтруем ключи, у которых хотя бы одна строка совпадает с skills
-    # matching_users = {key: user for key, user in user_dict.items() if any(skill in user.skills for skill in skill_list)}
+
+
+def get_random_user_with_matching_skill(user_dict, skill_list, last_users):
+    """Возвращает случайного пользователя с хотя бы одним совпадающим навыком из заданного списка,
+    избегая повторного выбора последних 5 пользователей."""
+
+
+
+    # Фильтруем пользователей, у которых есть хотя бы один навык из skill_list
     matching_users = {}
     for key, user in user_dict.items():
         flag = any(skill == skill2 for skill in skill_list for skill2 in user.skills)
         if flag:
             matching_users[key] = user
-    # Если есть совпадения, выбираем случайный ключ и значение
+
+    # Если есть совпадения, выбираем случайного пользователя, избегая последних 5
     if matching_users:
-        random_key = random.choice(list(matching_users.keys()))
-        return random_key, matching_users[random_key]
-    return None
+        while True:
+            random_key = random.choice(list(matching_users.keys()))
+            if random_key not in last_users[-5:]:
+                last_users.append(random_key)
+                print(random_key, matching_users[random_key])
+                return random_key, matching_users[random_key]
+            else:
+                return None
+
 
 
 
@@ -381,58 +437,80 @@ def get_random_user_with_matching_skill(user_dict, skill_list):
 async def recommendations(message: types.Message, state: FSMContext):
     chat_id = message.chat.id
     if message.text == 'Дизлайк' or message.text == 'Лайк':
+
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
             caption_flag = user.show_anketa()
-            result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills)
+            result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills, user.last_users)
+
             if result == None:
                 markup = menu_keyboard()
-                await message.answer('Никого нет для вас', reply_markup=markup)
+                await message.answer('Никого нет для вас',
+                                     reply_markup=markup
+                                     )
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
                 return
+
             key = result[0]
             value = result[1]
+            user.last_users.append(key)
 
             project = Dict_project.dict_project[key]
             caption = project.show_project()
-            markup = reaction_keyboard(message)
-            await message.answer(f'{caption}', reply_markup=markup)
+            markup = reaction_keyboard()
+            await message.answer(f'{caption}',
+                                 reply_markup=markup
+                                 )
             await Wait.recommendations.set()
 
 
-        if chat_id in Dict_project.dict_project:
+        elif chat_id in Dict_project.dict_project:
 
             project = Dict_project.dict_project[chat_id]
             caption_flag = project.show_project()
             word_to_find = project.skills
-            result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills)
+            result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills, project.last_users)
+
             if result == None:
                 markup = menu_keyboard()
-                await message.answer('Никого нет для вас', reply_markup=markup)
+                await message.answer('Никого нет для вас',
+                                     reply_markup=markup
+                                     )
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
                 return
 
             key = result[0]
             value = result[1]
+            project.last_users.append(key)
 
             user = Dict_users.dict_users[key]
             caption = user.show_anketa()
-            markup = reaction_keyboard(message)
-            await message.answer(f'{caption}', reply_markup=markup)
+            markup = reaction_keyboard()
+            await message.answer(f'{caption}',
+                                 reply_markup=markup
+                                 )
             await Wait.recommendations.set()
 
         if message.text == 'Лайк':
-            markup = reaction_keyboard(message)
-            await bot.send_message(chat_id= key, text= 'Вы понравились данному пользователю:', reply_markup=markup)
-            await bot.send_message(chat_id= key, text= f'{caption_flag}', reply_markup=markup)
+            markup = reaction_keyboard()
+            await bot.send_message(chat_id= key,
+                                   text= 'Вы понравились данному пользователю:'
+                                   )
+
+            await bot.send_message(chat_id= key,
+                                   text= f'{caption_flag}',
+                                   reply_markup=markup
+                                   )
             await Wait.recommendations.set()
 
 
     if message.text == 'Вернуться назад':
         markup = menu_keyboard()
-        await message.answer(menu_main_text, reply_markup=markup)
+        await message.answer(menu_main_text,
+                             reply_markup=markup
+                             )
         await Wait.menu_answer.set()
 
 

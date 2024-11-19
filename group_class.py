@@ -1,9 +1,10 @@
 class Group:
-    def __init__(self,name, text, skills=None,in_active=True):
+    def __init__(self,name, text, skills=None,in_active=True, last_users=[]):
         self.name = name
         self.text = text
         self.skills = skills if skills is not None else []
         self.in_active = in_active
+        self.last_users = last_users
 
     def add_skill(self,skill):
         '''Добавляет в список навыков новый навык'''
