@@ -8,7 +8,7 @@ from user_class import User
 from group_class import Group
 from project_dict import Dict_project
 import random
-
+from AI import Ai_promt
 
 bot = Bot(token="7855213389:AAFdmLy9DS1HJ39MuPaO48XKogYtvuKihOw")
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -48,9 +48,26 @@ def reaction_keyboard():
 # Функция для создания инлайн-клавиатуры с навыками программирования
 def skill_keyboard():
     markup = types.InlineKeyboardMarkup()
-    skills = ["Python", "Java", "JavaScript", "C++", "Go"]  # Список навыков
-    for skill in skills:
-        markup.add(InlineKeyboardButton(skill, callback_data=skill))  # Создаем кнопку для каждого навыка
+    skills = ['Frontend',
+              'Дизайнер',
+              'Teamlead',
+              'Тестировщик',
+              'Python',
+              'Java',
+              'JavaScript',
+              'C#',
+              'C++',
+              'SQL',
+              'Мобильная разработка'
+              ]
+# Список навыков
+    # Добавляем кнопки по 3 в ряд
+    for i in range(0, len(skills), 3):
+        row = []
+        for j in range(3):
+            if i + j < len(skills):
+                row.append(InlineKeyboardButton(skills[i + j], callback_data=skills[i + j]))
+        markup.add(*row)  # Создаем кнопку для каждого навыка
     return markup
 
 
@@ -59,8 +76,13 @@ def del_skill_keyboard(user):
     markup = types.InlineKeyboardMarkup()
     if len(user.skills) == 0:
         return None
-    for skill in user.skills:
-        markup.add(InlineKeyboardButton(skill, callback_data=f"del_{skill}"))  # Создаем кнопку для каждого навыка
+    for i in range(0, len(user.skills), 3):
+        row = []
+        for j in range(3):
+            if i + j < len(user.skills):
+                row.append(InlineKeyboardButton(user.skills[i + j], callback_data=f"del_{user.skills[i + j]}"))
+        markup.add(*row)  # Добавляем ряд кнопок в клавиатуру
+
     return markup
 
 
@@ -135,13 +157,14 @@ async def age(message: types.Message, state: FSMContext):
 @dp.message_handler(state = Wait.text)
 async def text(message: types.Message, state: FSMContext):
     await state.update_data(text = message.text)
-
     data = await state.get_data()
     print(data)
+
     join_team = data["join_team"]
     name = data["name"]
     age = data["age"]
-    skills = data["text"].replace(' ', '').split(',')
+    skills = Ai_promt.inquiry_user(data["text"])
+    #data["text"].replace(' ', '').split(',')
     chat_id = message.chat.id
 
     user = User(name, age, skills, True)
@@ -165,10 +188,10 @@ async def text_project(message: types.Message, state: FSMContext):
     join_team = data["join_team"]
     name_project = data["name_project"]
     text = data["text_project"]
-    #тут должны еще быть скиллы которые нейронка определяет
+    skills = Ai_promt.inquiry_project(text)
     chat_id = message.chat.id
 
-    project = Group(name_project, text, None, True)
+    project = Group(name_project, text, skills, True)
     Dict_project.dict_project[chat_id] = project
     caption = project.show_project()
     print(project.__dict__)
@@ -423,7 +446,6 @@ def get_random_user_with_matching_skill(user_dict, skill_list, last_users):
         while True:
             random_key = random.choice(list(matching_users.keys()))
             if random_key not in last_users[-5:]:
-                last_users.append(random_key)
                 print(random_key, matching_users[random_key])
                 return random_key, matching_users[random_key]
             else:
