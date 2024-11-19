@@ -7,7 +7,7 @@ class User:
 
     def add_skill(self, skill):
         """Добавляет новый навык в список навыков."""
-        if skill is not self.skills:
+        if skill not in self.skills:
             self.skills.append(skill)
             print(f"Навык {skill} добавлен")
         else:

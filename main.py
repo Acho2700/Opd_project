@@ -3,7 +3,6 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import KeyboardButton, InlineKeyboardButton, CallbackQuery
-from aiogram.types import KeyboardButton, InlineKeyboardButton, CallbackQuery
 from users_dict import Dict_users
 from user_class import User
 from group_class import Group
@@ -34,7 +33,7 @@ class Wait(StatesGroup):
 
 
 
-def menu_keyboard(message):
+def menu_keyboard():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     buttons = ["1", "2", "3", "4", "5"]
     markup.add(*buttons)
@@ -45,6 +44,25 @@ def reaction_keyboard(message):
     buttons = ["Лайк", "Дизлайк", "Вернуться назад"]
     markup.add(*buttons)
     return markup
+
+# Функция для создания инлайн-клавиатуры с навыками программирования
+def skill_keyboard():
+    markup = types.InlineKeyboardMarkup()
+    skills = ["Python", "Java", "JavaScript", "C++", "Go"]  # Список навыков
+    for skill in skills:
+        markup.add(InlineKeyboardButton(skill, callback_data=skill))  # Создаем кнопку для каждого навыка
+    return markup
+
+
+# Функция для создания инлайн-клавиатуры с навыками программирования для удаления
+def del_skill_keyboard(user):
+    markup = types.InlineKeyboardMarkup()
+    if len(user.skills) == 0:
+        return None
+    for skill in user.skills:
+        markup.add(InlineKeyboardButton(skill, callback_data=f"del_{skill}"))  # Создаем кнопку для каждого навыка
+    return markup
+
 
 
 #F обработчик команды старт, приветствие и выбор действия
@@ -117,7 +135,7 @@ async def text(message: types.Message, state: FSMContext):
     print(user.__dict__)
     await message.answer(f"Вот твоя анкета")
     await message.answer(f"{caption}")
-    markup = menu_keyboard(message)
+    markup = menu_keyboard()
     await message.answer(menu_main_text, reply_markup=markup)
     await Wait.menu_answer.set()
 
@@ -139,7 +157,7 @@ async def text_project(message: types.Message, state: FSMContext):
     print(project.__dict__)
     await message.answer(f"Вот анкета твоего проекта")
     await message.answer(f"{caption}")
-    markup = menu_keyboard(message)
+    markup = menu_keyboard()
     await message.answer(menu_main_text, reply_markup=markup)
     await Wait.menu_answer.set()
 
@@ -161,15 +179,28 @@ async def menu_answer(message: types.Message, state: FSMContext):
 
 
     if message.text == '1':
-        keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(types.InlineKeyboardButton(text="Нажми меня", callback_data="btn1"))
-        await message.answer('Введи навык для добавления', reply_markup=keyboard)
-        # await Wait.add_skill.set()
+        await message.answer('Выбери навык для добавления:', reply_markup=skill_keyboard())
+        await Wait.add_skill.set()
 
 
     if message.text == '2':
-        await message.answer('Введи навык для удаления')
-        await Wait.del_skill.set()
+        user = None
+        if chat_id in Dict_users.dict_users:
+            user = Dict_users.dict_users[chat_id]
+
+        if chat_id in Dict_project.dict_project:
+            user = Dict_project.dict_project[chat_id]
+
+        if user:
+            markup = del_skill_keyboard(user)
+            if markup == None:
+                markup = menu_keyboard()
+                await message.answer('У вас нет навыков!')
+                await message.answer(menu_main_text, reply_markup=markup)
+                await Wait.menu_answer.set()
+                return
+            await message.answer('Выбери навык для удаления:', reply_markup=markup)
+            await Wait.del_skill.set()
 
 
     if message.text == '3':
@@ -199,7 +230,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
             caption = user.show_anketa()
-            markup = menu_keyboard(message)
+            markup = menu_keyboard()
             await message.answer(f"Вот твоя анкета")
             print(user.__dict__)
             await message.answer(f"{caption}", reply_markup=markup)
@@ -208,7 +239,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
         if chat_id in Dict_project.dict_project:
             user = Dict_project.dict_project[chat_id]
             caption = user.show_project()
-            markup = menu_keyboard(message)
+            markup = menu_keyboard()
             await message.answer(f"Вот твой проект")
             print(user.__dict__)
             await message.answer(f"{caption}", reply_markup=markup)
@@ -222,7 +253,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
             user = Dict_users.dict_users[chat_id]
             result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills)
             if result == None:
-                markup = menu_keyboard(message)
+                markup = menu_keyboard()
                 await message.answer('Никого нет для вас', reply_markup=markup)
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
@@ -238,7 +269,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
             project = Dict_project.dict_project[chat_id]
             result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills)
             if result == None:
-                markup = menu_keyboard(message)
+                markup = menu_keyboard()
                 await message.answer('Никого нет для вас', reply_markup=markup)
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
@@ -253,9 +284,13 @@ async def menu_answer(message: types.Message, state: FSMContext):
         await Wait.recommendations.set()
 
 
-@dp.message_handler(state= Wait.add_skill)
-async def add_skill(message: types.Message, state: FSMContext):
-    chat_id = message.chat.id
+
+# Обработка нажатия на инлайн-кнопки
+@dp.callback_query_handler(state=Wait.add_skill)
+async def handle_skill_selection(callback_query: types.CallbackQuery, state: FSMContext):
+    chat_id = callback_query.message.chat.id
+    skill = callback_query.data  # Получаем навык из callback_data
+
     user = None
     if chat_id in Dict_users.dict_users:
         user = Dict_users.dict_users[chat_id]
@@ -263,15 +298,20 @@ async def add_skill(message: types.Message, state: FSMContext):
     if chat_id in Dict_project.dict_project:
         user = Dict_project.dict_project[chat_id]
 
-    user.add_skill(message.text)
-    await message.answer('Навык успешно добавлен!')
-    markup = menu_keyboard(message)
-    await message.answer(menu_main_text, reply_markup=markup)
-    await Wait.menu_answer.set()
+    user.add_skill(skill)  # Добавляем выбранный навык
+    await callback_query.answer('Навык успешно добавлен!')  # Отправляем ответ на нажатие кнопки
+    markup = menu_keyboard()
+    await callback_query.message.answer(menu_main_text, reply_markup=markup)  # Отправляем главное меню
+    await Wait.menu_answer.set()  # Завершаем состояние
 
-@dp.message_handler(state= Wait.del_skill)
-async def del_skill(message: types.Message, state: FSMContext):
-    chat_id = message.chat.id
+
+
+# Обработка нажатия на инлайн-кнопки для удаления навыка
+@dp.callback_query_handler(state=Wait.del_skill)
+async def handle_del_skill_selection(callback_query: types.CallbackQuery, state: FSMContext):
+    chat_id = callback_query.message.chat.id
+    skill = callback_query.data[4:]  # Получаем навык из callback_data, удаляя префикс "del_"
+
     user = None
     if chat_id in Dict_users.dict_users:
         user = Dict_users.dict_users[chat_id]
@@ -279,11 +319,13 @@ async def del_skill(message: types.Message, state: FSMContext):
     if chat_id in Dict_project.dict_project:
         user = Dict_project.dict_project[chat_id]
 
-    user.delete_skill(message.text)
-    markup = menu_keyboard(message)
-    await message.answer('Навык успешно удалён!')
-    await message.answer(menu_main_text, reply_markup=markup)
-    await Wait.menu_answer.set()
+    user.delete_skill(skill)  # Удаляем выбранный навык
+    await callback_query.answer('Навык успешно удален!')  # Отправляем ответ на нажатие кнопки
+    markup = menu_keyboard()
+    await callback_query.message.answer(menu_main_text, reply_markup=markup)  # Отправляем главное меню
+    await Wait.menu_answer.set()  # Завершаем состояние
+
+
 
 @dp.message_handler(state= Wait.anketa_activ)
 async def anketa_activ(message: types.Message, state: FSMContext):
@@ -301,17 +343,17 @@ async def anketa_activ(message: types.Message, state: FSMContext):
     if message.text == 'Да' and check:
         user.activ_status()
         await message.answer('Ваша анкета больше не активна')
-        markup = menu_keyboard(message)
+        markup = menu_keyboard()
         await message.answer(menu_main_text, reply_markup=markup)
         await Wait.menu_answer.set()
     elif message.text == 'Да' and check == False:
         user.activ_status()
         await message.answer('Ваша анкета снова активна')
-        markup = menu_keyboard(message)
+        markup = menu_keyboard()
         await message.answer(menu_main_text, reply_markup=markup)
         await Wait.menu_answer.set()
     elif message.text == 'Нет':
-        markup = menu_keyboard(message)
+        markup = menu_keyboard()
         await message.answer(menu_main_text, reply_markup=markup)
         await Wait.menu_answer.set()
 
@@ -344,7 +386,7 @@ async def recommendations(message: types.Message, state: FSMContext):
             caption_flag = user.show_anketa()
             result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills)
             if result == None:
-                markup = menu_keyboard(message)
+                markup = menu_keyboard()
                 await message.answer('Никого нет для вас', reply_markup=markup)
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
@@ -366,7 +408,7 @@ async def recommendations(message: types.Message, state: FSMContext):
             word_to_find = project.skills
             result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills)
             if result == None:
-                markup = menu_keyboard(message)
+                markup = menu_keyboard()
                 await message.answer('Никого нет для вас', reply_markup=markup)
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
@@ -389,7 +431,7 @@ async def recommendations(message: types.Message, state: FSMContext):
 
 
     if message.text == 'Вернуться назад':
-        markup = menu_keyboard(message)
+        markup = menu_keyboard()
         await message.answer(menu_main_text, reply_markup=markup)
         await Wait.menu_answer.set()
 
