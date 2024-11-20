@@ -28,7 +28,7 @@ class Group:
         status = 'набирает участников' if self.in_active else 'прекратил набор'
         print(f'Проект {self.name} {status}')
 
-    def show_project(self):
+    def show_anketa(self):
         '''Возвращает карточку проекта'''
         return (f'Проект: {self.name}\n'
                 f'Описание: {self.text}\n'

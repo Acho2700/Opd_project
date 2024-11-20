@@ -46,5 +46,3 @@ class Ai_promt:
             s[i] = s[i].strip()
         return s  # Возвращаем собранный ответ
 
-# print(type(Ai_promt.inquiry('верстал сайты, делал игры, разрабатывал на python')))
-

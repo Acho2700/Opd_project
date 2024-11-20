@@ -193,7 +193,7 @@ async def text_project(message: types.Message, state: FSMContext):
 
     project = Group(name_project, text, skills, True)
     Dict_project.dict_project[chat_id] = project
-    caption = project.show_project()
+    caption = project.show_anketa()
     print(project.__dict__)
     await message.answer(f"Вот анкета твоего проекта")
     await message.answer(f"{caption}")
@@ -306,17 +306,21 @@ async def menu_answer(message: types.Message, state: FSMContext):
                 await message.answer('Никого нет для вас',
                                      reply_markup=markup
                                      )
+                print('menu rec None')
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
-                return
 
-            key = result[0]
-            value = result[1]
-            user.last_users.append(key)
 
-            project = Dict_project.dict_project[key]
-            caption = project.show_project()
-            await message.answer(f'{caption}')
+            else:
+                key = result[0]
+                value = result[1]
+                user.last_users.append(key)
+                print('menu rec get')
+                project = Dict_project.dict_project[key]
+                caption = project.show_anketa()
+                await message.answer(f'{caption}')
+                await state.update_data(liked_id=key)
+                await Wait.recommendations.set()
 
         elif chat_id in Dict_project.dict_project:
             project = Dict_project.dict_project[chat_id]
@@ -327,19 +331,20 @@ async def menu_answer(message: types.Message, state: FSMContext):
                 await message.answer('Никого нет для вас',
                                      reply_markup=markup
                                      )
+                print('menu rec None')
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
-                return
 
-            key = result[0]
-            value = result[1]
-            project.last_users.append(key)
-
-            user = Dict_users.dict_users[key]
-            caption = user.show_anketa()
-            await message.answer(f'{caption}')
-
-        await Wait.recommendations.set()
+            else:
+                key = result[0]
+                value = result[1]
+                project.last_users.append(key)
+                print('menu rec get')
+                user = Dict_users.dict_users[key]
+                caption = user.show_anketa()
+                await message.answer(f'{caption}')
+                await state.update_data(liked_id = key)
+                await Wait.recommendations.set()
 
 
 
@@ -446,9 +451,11 @@ def get_random_user_with_matching_skill(user_dict, skill_list, last_users):
         while True:
             random_key = random.choice(list(matching_users.keys()))
             if random_key not in last_users[-5:]:
+                print('Получил рандом юзера')
                 print(random_key, matching_users[random_key])
                 return random_key, matching_users[random_key]
             else:
+                print('None get')
                 return None
 
 
@@ -458,7 +465,30 @@ def get_random_user_with_matching_skill(user_dict, skill_list, last_users):
 @dp.message_handler(state= Wait.recommendations)
 async def recommendations(message: types.Message, state: FSMContext):
     chat_id = message.chat.id
+    data = await state.get_data()
+    d = list(data.values())
+    user = None
+    if chat_id in Dict_users.dict_users:
+        user = Dict_users.dict_users[chat_id]
+    elif chat_id in Dict_project.dict_project:
+        user = Dict_project.dict_project[chat_id]
+
     if message.text == 'Дизлайк' or message.text == 'Лайк':
+        key = data["liked_id"]
+        if message.text == 'Лайк':
+            markup = reaction_keyboard()
+            await bot.send_message(chat_id= key,
+                                   text= 'Вы понравились данному пользователю:'
+                                   )
+
+            await bot.send_message(chat_id= key,
+                                   text= f'{user.show_anketa()} \n'
+                                         f'\n'
+                                         f'@{message.from_user.username}',
+                                   reply_markup=markup
+                                   )
+            print('rec like')
+            await Wait.recommendations.set()
 
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
@@ -470,27 +500,28 @@ async def recommendations(message: types.Message, state: FSMContext):
                 await message.answer('Никого нет для вас',
                                      reply_markup=markup
                                      )
+                print('rec none')
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
-                return
 
-            key = result[0]
-            value = result[1]
-            user.last_users.append(key)
-
-            project = Dict_project.dict_project[key]
-            caption = project.show_project()
-            markup = reaction_keyboard()
-            await message.answer(f'{caption}',
-                                 reply_markup=markup
-                                 )
-            await Wait.recommendations.set()
+            else:
+                key = result[0]
+                value = result[1]
+                user.last_users.append(key)
+                print('rec diz like')
+                project = Dict_project.dict_project[key]
+                caption = project.show_anketa()
+                markup = reaction_keyboard()
+                await message.answer(f'{caption}',
+                                     reply_markup=markup
+                                     )
+                await Wait.recommendations.set()
 
 
         elif chat_id in Dict_project.dict_project:
 
             project = Dict_project.dict_project[chat_id]
-            caption_flag = project.show_project()
+            caption_flag = project.show_anketa()
             word_to_find = project.skills
             result = get_random_user_with_matching_skill(Dict_users.dict_users, project.skills, project.last_users)
 
@@ -499,33 +530,26 @@ async def recommendations(message: types.Message, state: FSMContext):
                 await message.answer('Никого нет для вас',
                                      reply_markup=markup
                                      )
+                print('rec none')
+
                 await message.answer(menu_main_text)
                 await Wait.menu_answer.set()
-                return
 
-            key = result[0]
-            value = result[1]
-            project.last_users.append(key)
+            else:
+                key = result[0]
+                value = result[1]
+                project.last_users.append(key)
+                print('rec diz like')
 
-            user = Dict_users.dict_users[key]
-            caption = user.show_anketa()
-            markup = reaction_keyboard()
-            await message.answer(f'{caption}',
-                                 reply_markup=markup
-                                 )
-            await Wait.recommendations.set()
+                user = Dict_users.dict_users[key]
+                caption = user.show_anketa()
+                markup = reaction_keyboard()
+                await message.answer(f'{caption}',
+                                     reply_markup=markup
+                                     )
+                await Wait.recommendations.set()
 
-        if message.text == 'Лайк':
-            markup = reaction_keyboard()
-            await bot.send_message(chat_id= key,
-                                   text= 'Вы понравились данному пользователю:'
-                                   )
 
-            await bot.send_message(chat_id= key,
-                                   text= f'{caption_flag}',
-                                   reply_markup=markup
-                                   )
-            await Wait.recommendations.set()
 
 
     if message.text == 'Вернуться назад':
@@ -540,5 +564,3 @@ async def recommendations(message: types.Message, state: FSMContext):
 
 
 executor.start_polling(dp)
-
-
