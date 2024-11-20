@@ -33,4 +33,4 @@ class Group:
         return (f'Проект: {self.name}\n'
                 f'Описание: {self.text}\n'
                 f'Статус проекта: {'Идёт набор' if self.in_active else 'Набор прекращён'}\n'
-                f'Список навыков/специалистов необходимых для проекта {self.skills}')
+                f'Список навыков необходимых для проекта:\n {', '.join(self.skills) if self.skills else 'Нет навыков'}')

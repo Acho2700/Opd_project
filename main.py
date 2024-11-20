@@ -33,6 +33,7 @@ class Wait(StatesGroup):
 
 
 
+
 def menu_keyboard():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     buttons = ["1", "2", "3", "4", "5"]
@@ -58,9 +59,8 @@ def skill_keyboard():
               'C#',
               'C++',
               'SQL',
-              'Мобильная разработка'
-              ]
-# Список навыков
+              'Мобильная разработка',
+              'GameDev'] # Список навыков
     # Добавляем кнопки по 3 в ряд
     for i in range(0, len(skills), 3):
         row = []
@@ -163,11 +163,11 @@ async def text(message: types.Message, state: FSMContext):
     join_team = data["join_team"]
     name = data["name"]
     age = data["age"]
+    text = data["text"]
     skills = Ai_promt.inquiry_user(data["text"])
-    #data["text"].replace(' ', '').split(',')
     chat_id = message.chat.id
 
-    user = User(name, age, skills, True)
+    user = User(name, age, text, skills, True)
     Dict_users.dict_users[chat_id] = user
     caption = user.show_anketa()
     print(user.__dict__)
@@ -188,7 +188,7 @@ async def text_project(message: types.Message, state: FSMContext):
     join_team = data["join_team"]
     name_project = data["name_project"]
     text = data["text_project"]
-    skills = Ai_promt.inquiry_project(text)
+    skills = Ai_promt.inquiry_project(data["text_project"])
     chat_id = message.chat.id
 
     project = Group(name_project, text, skills, True)
@@ -468,23 +468,21 @@ async def recommendations(message: types.Message, state: FSMContext):
     data = await state.get_data()
     d = list(data.values())
     user = None
+    key = data["liked_id"]
     if chat_id in Dict_users.dict_users:
         user = Dict_users.dict_users[chat_id]
     elif chat_id in Dict_project.dict_project:
         user = Dict_project.dict_project[chat_id]
 
     if message.text == 'Дизлайк' or message.text == 'Лайк':
-        key = data["liked_id"]
         if message.text == 'Лайк':
-            markup = reaction_keyboard()
+            markup = menu_keyboard()
             await bot.send_message(chat_id= key,
-                                   text= 'Вы понравились данному пользователю:'
+                                   text= f'Вы понравились данному пользователю: @{message.from_user.username}'
                                    )
 
             await bot.send_message(chat_id= key,
-                                   text= f'{user.show_anketa()} \n'
-                                         f'\n'
-                                         f'@{message.from_user.username}',
+                                   text= f'{user.show_anketa()} \n',
                                    reply_markup=markup
                                    )
             print('rec like')

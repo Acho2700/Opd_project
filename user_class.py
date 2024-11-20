@@ -1,7 +1,8 @@
 class User:
-    def __init__(self, name, age, skills=None, in_active=True, last_users=[]):
+    def __init__(self, name, age, text, skills=None, in_active=True, last_users=[]):
         self.name = name
         self.age = age
+        self.text = text
         self.skills = skills if skills is not None else []
         self.in_active = in_active
         self.last_users = last_users
@@ -32,6 +33,7 @@ class User:
         """Возвращает строковое представление пользователя."""
         return (f"Имя пользователя: {self.name}\n"
                 f"Возраст пользователя: {self.age}\n"
-                f"Навыки пользователя: {', '.join(self.skills) if self.skills else 'Нет навыков'}\n"
-                f"В поиске работы: {'Да' if self.in_active else 'Нет'}\n")
+                f"Описание: {self.text}\n"
+                f"В поиске работы: {'Да' if self.in_active else 'Нет'}\n"
+                f"Навыки пользователя: \n {', '.join(self.skills) if self.skills else 'Нет навыков'}")
 
