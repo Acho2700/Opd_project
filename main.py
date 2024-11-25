@@ -90,17 +90,26 @@ def del_skill_keyboard(user):
 #F обработчик команды старт, приветствие и выбор действия
 @dp.message_handler(commands='start', state= '*')
 async def start(message: types.Message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
-                                       one_time_keyboard=True)
-    buttons = ["Вступить в комманду",
-               "Найти комманду"]
-    markup.add(*buttons)
-    await bot.send_message(message.chat.id,
-                           'Привет, я бот для поиска IT команды \n '
-                           'Выбери что хочешь сделать:',
-                           reply_markup=markup
-                           )
-    await Wait.group_or_user.set()
+    user = None
+    chat_id = message.chat.id
+
+
+    if chat_id not in Dict_project.dict_project and chat_id not in Dict_users.dict_users:
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
+                                           one_time_keyboard=True)
+        buttons = ["Вступить в комманду",
+                   "Найти комманду"]
+        markup.add(*buttons)
+        await bot.send_message(message.chat.id,
+                               'Привет, я бот для поиска IT команды \n '
+                               'Выбери что хочешь сделать:',
+                               reply_markup=markup
+                               )
+        await Wait.group_or_user.set()
+    else:
+        markup = menu_keyboard()
+        await bot.send_message(message.chat.id, menu_main_text, reply_markup=markup)
+        await Wait.menu_answer.set()
 
 @dp.message_handler(state= Wait.group_or_user)
 async def group_or_user(message: types.Message, state: FSMContext):
