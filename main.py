@@ -294,7 +294,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
 
         if chat_id in Dict_project.dict_project:
             user = Dict_project.dict_project[chat_id]
-            caption = user.show_project()
+            caption = user.show_anketa()
             markup = menu_keyboard()
             await message.answer(f"Вот твой проект")
             await message.answer(f"{caption}",
