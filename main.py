@@ -10,13 +10,17 @@ from project_dict import Dict_project
 from random import choice
 from AI import Ai_promt
 
-bot = Bot(token="7855213389:AAFdmLy9DS1HJ39MuPaO48XKogYtvuKihOw")
+bot = Bot(token='7855213389:AAFdmLy9DS1HJ39MuPaO48XKogYtvuKihOw')
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
-menu_main_text = "1. Добавить навык\n 2.Удалить навык\n 3. Выключить\Включить анкету\n 4. Моя анкета\n 5. Искать проект/участника"
+menu_main_text = ("1. Добавить навык\n"
+                  " 2.Удалить навык\n"
+                  " 3. Выключить\Включить анкету\n"
+                  " 4. Моя анкета\n"
+                  " 5. Искать проект/участника")
 
-#класс состояний пользвателя
+#класс состояний пользователя
 class Wait(StatesGroup):
     join_team = State()
     group_or_user = State()
@@ -247,7 +251,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
             await message.answer('Выбери навык для удаления:', reply_markup=markup)
             await Wait.del_skill.set()
 
-    #переключение активности анкеты (напомните задействовать это в системе рекомендаций мне!!!!)
+    #переключение активности анкеты
     if message.text == '3':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
                                            one_time_keyboard=True)
@@ -280,7 +284,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
                                      )
                 await Wait.anketa_activ.set()
 
-    # просто просмотр своей анкеты)))
+    # просто просмотр своей анкеты
     if message.text == '4':
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
@@ -309,7 +313,7 @@ async def menu_answer(message: types.Message, state: FSMContext):
                              reply_markup=markup
                              )
 
-        #если анкета участника то подбитрает проекты, иначе участников
+        #если анкета участника то подбирает проекты, иначе участников
         if chat_id in Dict_users.dict_users:
             user = Dict_users.dict_users[chat_id]
             result = get_random_user_with_matching_skill(Dict_project.dict_project, user.skills, user.last_users)
